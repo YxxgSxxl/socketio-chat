@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Webserver Chat</title>
+</head>
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    .message {
+        height: 80vh;
+        background-color: rgb(0, 0, 0);
+        color: aliceblue;
+    }
+
+    #textArea {
+        height: 80vh;
+    }
+
+    #form {
+        height: 20vh;
+        background-color: rgb(234, 159, 229);
+    }
+
+    #form {
+        display: flex;
+    }
+
+    #msg {
+        width: 100%;
+        height: 100%;
+
+        background-color: rgb(16, 16, 16);
+        color: aliceblue;
+    }
+
+    #submit {
+        width: 100%;
+        height: 100%;
+
+        font-size: 3em;
+
+        background-color: rgb(83, 163, 185);
+        color: aliceblue;
+        cursor: pointer;
+    }
+</style>
+
+<body>
+    <div class="message">
+        <div id="textArea"></div>
+
+        <form action="" id="form">
+            <input type="text" name="msg" id="msg" autocomplete="off" />
+            <input type="submit" id="submit" value="Send" />
+        </form>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const form = document.getElementById("form");
+        const message = document.getElementById("msg");
+        const submit = document.getElementById("submit");
+        let textArea = document.getElementById("textArea");
+
+        const socket = io();
+
+        form.addEventListener("submit", (e) => {
+            e.preventDefault(); // Prevents the page from loading when submiting.
+
+            if (message.value == '') {
+                return;
+            } else {
+                socket.emit("chat_message", message.value);
+
+                message.value = "";
+
+                console.log(textArea.value, submit, socket);
+            }
+
+        });
+
+        socket.on("chat_message", (msg) => {
+            console.log(msg);
+
+            textArea.innerHTML += `<p>Anonymous: ${msg}</p>`;
+        });
+    </script>
+</body>
+
+</html>

@@ -1,23 +1,83 @@
-const express = require('express');
-const { createServer } = require('node:http');
-const { join } = require('node:path');
-const { Server } = require('socket.io');
+const app = require('express')();
+const server = require('http').createServer(app);
+const io = require('socket.io')(server);
 
-const app = express(); // APP
-const server = createServer(app); // SERVER
-const io = new Server(server); // SOCKETS
-
-// HTML FILE INTEGRATION
+// ExpressJS
 app.get('/', (req, res) => {
-    res.sendFile(join(__dirname, 'index.html'));
-});
+    res.sendFile(`${__dirname}/public/index.html`)
+})
 
-// SOCKET.IO CONNECTION INIT
+// Socket.io
+const allClients = [];
+let clientConnected = undefined;
+let online = 0;
+
+// Connections management
 io.on('connection', (socket) => {
-    console.log('a user connected');
-});
+    clientConnected = false;
+    online++;
 
-// SERVER ON PORT 3000
+    if (online >= 1) {
+        allClients.online = online;
+    }
+
+    for (var i = 0; i < allClients.length; i++) {
+        if (allClients[i].id === socket.id) {
+            clientConnected = true;
+        }
+    }
+
+    if (clientConnected === false) {
+        allClients.push(
+            {
+                id: socket.id,
+                ip: socket.handshake.address,
+                time: socket.handshake.time
+            }
+        );
+    }
+
+    console.clear();
+    console.info(allClients);
+    console.info(`L'utilisateur "${allClients[0].id}" s\'est connecté.`);
+
+    socket.on('disconnect', () => {
+        console.clear();
+        online--;
+        allClients.online = allClients.online - 1;
+        clientConnected = false;
+
+        for (var i = 0; i < allClients.length; i++) {
+            // console.log(allClients[i].id );
+            if (allClients[i].id === socket.id) {
+                allClients.splice(i, 1);
+            }
+        }
+
+        if (online <= 0) {
+            allClients.online = "No User connected";
+        }
+
+        console.info(allClients);
+    });
+
+    socket.on('chat_message', (msg) => {
+        console.log('Message: ' + msg);
+
+        io.emit("chat_message", msg);
+    })
+
+    // io.on("connection", (socket) => {
+    //     socket.on("message", (arg) => {
+    //       console.log(arg); // world
+    //     });
+    //   });
+})
+
+// io.on('msg', (msg) => {
+//     console.log('message: ' + msg);
+// });
+
 server.listen(3000, () => {
-    console.log('server running at http://localhost:3000');
-});
+    console.log('Listening now');
+})
